@@ -28,7 +28,7 @@ unsigned long lastPingTime = 0;
 int currentLight = yellow;
 
 
-Client client(server, 80);
+Client client(server, 8080);
 
 void setup()
 {
@@ -62,7 +62,7 @@ void checkHudson(){
      Serial.println("connecting...");
     if (client.connect()) {
       Serial.println("connected");
-      client.println("GET /site/stoplight/ HTTP/1.0");
+      client.println("GET /api/xml?xpath=//job/name[.='office-kitten-multi-threaded']/following-sibling::color HTTP/1.0");
       client.println();
       mode = connectedMode;
     } 
