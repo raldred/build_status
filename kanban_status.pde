@@ -5,12 +5,9 @@ int red = 2;
 int yellow = 3;
 int green = 4;
 
-byte mac[] = { 
-  0x00, 0x26, 0x4a, 0x14, 0x7F, 0x9F };
-byte ip[] = { 
-  192,168,3,14 };
-byte server[] = {
-  192,168,3,15}; // kanban
+byte mac[] = { 0x00, 0x26, 0x4a, 0x14, 0x7F, 0x9F };
+byte ip[] = { 192,168,3,222 };
+byte server[] = { 192,168,3,15 }; // kanban
 
 #define maxResponseLength 1000
 
@@ -26,7 +23,6 @@ int pingInterval = 10 * 1000; //10 seconds
 unsigned long lastPingTime = 0;
 
 int currentLight = yellow;
-
 
 Client client(server, 8080);
 
@@ -53,7 +49,13 @@ void loop()
   
   if((millis() - lastPingTime) >= pingInterval){
     checkHudson(); 
-  } 
+  }
+  else if(currentLight == yellow) {
+    delay(1000);
+    digitalWrite(currentLight, LOW);
+    delay(1000);
+  }
+    
 }
 
 void checkHudson(){
@@ -84,24 +86,21 @@ void checkHudson(){
     if (!client.connected()) {
       lastPingTime = millis();
       // TODO: change this to 412
-      if(response.contains("HTTP/1.1 412 ")){
-        if(response.contains("building")){
+      if(response.contains("anime")){
           Serial.println("YELLOW - 412");
           currentLight = yellow;
           digitalWrite(yellow, HIGH);
           digitalWrite(red, LOW);
           digitalWrite(green, LOW);
-        } 
-        else {
-          Serial.println("RED - 412");   
-          currentLight = red;
-          digitalWrite(red, HIGH);
-          digitalWrite(yellow, LOW);
-          digitalWrite(green, LOW);   
-        }
-
+      }
+      else if(response.contains("<color>red</color>") || response.contains("<color>aborted</color>")) {
+        Serial.println("RED - 412");   
+        currentLight = red;
+        digitalWrite(red, HIGH);
+        digitalWrite(yellow, LOW);
+        digitalWrite(green, LOW);
       } 
-      else if(response.contains("HTTP/1.1 200")){
+      else if(response.contains("<color>blue</color>")){
         Serial.println("GREEN - 200");  
         currentLight = green;
         digitalWrite(green, HIGH);
