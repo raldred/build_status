@@ -1,9 +1,9 @@
 #include <Ethernet.h>
 #include <WString.h>
 
-int red = 2;
-int yellow = 3;
-int green = 4;
+int red = 6;
+int yellow = 7;
+int green = 8;
 
 byte mac[] = { 0x00, 0x26, 0x4a, 0x14, 0x7F, 0x9F };
 byte ip[] = { 192,168,3,222 };
@@ -17,46 +17,63 @@ int notConnectedMode = 0;
 int connectedMode = 1;
 int mode = 0;
 
-int ethernetResetPin = 6;
-
 int pingInterval = 10 * 1000; //10 seconds
+long maxLightOnTime = 60000; //1 minute
+
 unsigned long lastPingTime = 0;
+unsigned long lastBuild = 0;
 
 int currentLight = yellow;
 
 Client client(server, 8080);
 
 void setup()
-{
-
+{  
   pinMode(red, OUTPUT);
   pinMode(yellow, OUTPUT);
   pinMode(green, OUTPUT);
-  pinMode(ethernetResetPin, OUTPUT);
-  digitalWrite(ethernetResetPin, LOW);
   delay(500);
-  digitalWrite(ethernetResetPin, HIGH);
-
   Ethernet.begin(mac, ip);
   Serial.begin(9600);
-
-  delay(1000);
+  delay(500);
 }
 
 void loop()
 {
-  digitalWrite(currentLight, HIGH);
+  
+  watchBuildStateTimeout();
   
   if((millis() - lastPingTime) >= pingInterval){
     checkHudson(); 
-  }
-  else if(currentLight == yellow) {
+  } else {
+    flashIfBuilding();
+  }   
+}
+
+void flashIfBuilding() {
+ if((currentLight == yellow) && (mode == notConnectedMode)) {
+    digitalWrite(currentLight, HIGH);
     delay(1000);
     digitalWrite(currentLight, LOW);
     delay(1000);
-  }
-    
+    lastBuild = millis(); 
+    Serial.println("current Light is Building");
+  }  
 }
+
+void watchBuildStateTimeout() {
+  if((currentLight != yellow) && (mode == notConnectedMode)) {
+    if(((millis() - lastBuild) >= maxLightOnTime) && (currentLight != red)) {
+      digitalWrite(currentLight, LOW);
+      Serial.println("current Light is OFF");
+    }
+    else {
+      digitalWrite(currentLight, HIGH);
+      Serial.println("current Light is ON");
+    }
+  }
+}
+
 
 void checkHudson(){
    if(mode == notConnectedMode){
@@ -85,25 +102,22 @@ void checkHudson(){
 
     if (!client.connected()) {
       lastPingTime = millis();
-      // TODO: change this to 412
+      
       if(response.contains("anime")){
           Serial.println("YELLOW - 412");
           currentLight = yellow;
-          digitalWrite(yellow, HIGH);
           digitalWrite(red, LOW);
           digitalWrite(green, LOW);
       }
       else if(response.contains("<color>red</color>") || response.contains("<color>aborted</color>")) {
-        Serial.println("RED - 412");   
+        Serial.println("RED - 412");
         currentLight = red;
-        digitalWrite(red, HIGH);
         digitalWrite(yellow, LOW);
         digitalWrite(green, LOW);
       } 
       else if(response.contains("<color>blue</color>")){
-        Serial.println("GREEN - 200");  
+        Serial.println("GREEN - 200");
         currentLight = green;
-        digitalWrite(green, HIGH);
         digitalWrite(red, LOW);
         digitalWrite(yellow, LOW);
       }
@@ -113,12 +127,7 @@ void checkHudson(){
 
       response = "";
       mode = notConnectedMode;
-      digitalWrite(ethernetResetPin, LOW);
       delay(500);
-      digitalWrite(ethernetResetPin, HIGH);
-
-      Ethernet.begin(mac, ip);
-      //delay(5000);
     }
   }
 
