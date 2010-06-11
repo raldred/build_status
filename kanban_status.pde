@@ -34,7 +34,7 @@ void setup()
   pinMode(green, OUTPUT);
   delay(500);
   Ethernet.begin(mac, ip);
-  Serial.begin(9600);
+//  Serial.begin(9600);
   delay(500);
 }
 
@@ -57,19 +57,20 @@ void flashIfBuilding() {
     digitalWrite(currentLight, LOW);
     delay(1000);
     lastBuild = millis(); 
-    Serial.println("current Light is Building");
+//    Serial.println("current Light is Building");
   }  
 }
 
 void watchBuildStateTimeout() {
   if((currentLight != yellow) && (mode == notConnectedMode)) {
-    if(((millis() - lastBuild) >= maxLightOnTime) && (currentLight != red)) {
+    if(
+    ((millis() - lastBuild) >= maxLightOnTime) && (currentLight != red)) {
       digitalWrite(currentLight, LOW);
-      Serial.println("current Light is OFF");
+//      Serial.println("current Light is OFF");
     }
     else {
       digitalWrite(currentLight, HIGH);
-      Serial.println("current Light is ON");
+//      Serial.println("current Light is ON");
     }
   }
 }
@@ -78,17 +79,17 @@ void watchBuildStateTimeout() {
 void checkHudson(){
    if(mode == notConnectedMode){
     // try to connect
-     Serial.println("connecting...");
+//     Serial.println("connecting...");
     if (client.connect()) {
-      Serial.println("connected");
+//      Serial.println("connected");
       client.println("GET /api/xml?xpath=//job/name[.='office-kitten-multi-threaded']/following-sibling::color HTTP/1.0");
       client.println();
       mode = connectedMode;
     } 
     else {
-      Serial.println("connection failed");
+//      Serial.println("connection failed");
       delay(2000);
-      Serial.println("trying again...");  
+//      Serial.println("trying again...");  
     }
    
   } 
@@ -104,25 +105,25 @@ void checkHudson(){
       lastPingTime = millis();
       
       if(response.contains("anime")){
-          Serial.println("YELLOW - 412");
+//          Serial.println("YELLOW - 412");
           currentLight = yellow;
           digitalWrite(red, LOW);
           digitalWrite(green, LOW);
       }
       else if(response.contains("<color>red</color>") || response.contains("<color>aborted</color>")) {
-        Serial.println("RED - 412");
+//        Serial.println("RED - 412");
         currentLight = red;
         digitalWrite(yellow, LOW);
         digitalWrite(green, LOW);
       } 
       else if(response.contains("<color>blue</color>")){
-        Serial.println("GREEN - 200");
+//        Serial.println("GREEN - 200");
         currentLight = green;
         digitalWrite(red, LOW);
         digitalWrite(yellow, LOW);
       }
-      Serial.println();
-      Serial.println("disconnecting.");
+//      Serial.println();
+//      Serial.println("disconnecting.");
       client.stop();
 
       response = "";
